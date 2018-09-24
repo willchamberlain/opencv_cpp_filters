@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
+#include <string>
 
 using namespace cv;
 using namespace std;
@@ -27,7 +28,7 @@ VideoCapture VideoCaptureMeta::getDevice() {
     return v;
 }
 
-//  cc ./test__opencv_webcam.cpp -o test__opencv_webcam__exe  -lstdc++ -lopencv_core -lopencv_video -lopencv_highgui -lopencv_imgproc -ltiff
+//  cc ./test__opencv_webcam.cpp -std=c++11 -o test__opencv_webcam__exe  -lstdc++ -lopencv_core -lopencv_video -lopencv_highgui -lopencv_imgproc -ltiff
 
 //  compile cpp on command line :  https://stackoverflow.com/questions/20010244/undefined-reference-to-stdios-baseinitinit?rq=1
 
@@ -36,6 +37,10 @@ VideoCapture VideoCaptureMeta::getDevice() {
 //  gdb / Gnu debugger - basics of running :  https://stackoverflow.com/questions/18271363/line-by-line-c-c-code-debugging-in-linux-ubuntu
 
 //  VSCode extension for very basic compiling :  https://marketplace.visualstudio.com/items?itemName=brapifra.c-compiler
+
+
+//  in threads ?? :  https://stackoverflow.com/questions/27661353/opencv-camera-capture-from-within-a-thread
+
 
 int main(int argc, char const *argv[])
 {
@@ -47,6 +52,10 @@ int main(int argc, char const *argv[])
 
     while (numberOfDevices<100) //(noError)
     {
+        if (0==numberOfDevices) {
+            numberOfDevices++;
+            continue;
+        }
         try {
             // Check if camera is available.
             VideoCapture videoCapture(numberOfDevices); // Will crash if not available, hence try/catch.
@@ -70,13 +79,58 @@ int main(int argc, char const *argv[])
         numberOfDevices++;
     }
     cout << "found " << cameraDefs.size() << " cameras:" << endl;
-    for (VideoCaptureMeta& cameraDefn: cameraDefs) {
-        cout << "Camera # " << cameraDefn.getDeviceNum() << " is open == " << cameraDefn.getDevice().isOpened() << endl;
+
+    bool keepLooping = true;
+    while(keepLooping) {
+        for (VideoCaptureMeta& cameraDefn: cameraDefs) {
+            cout << "Camera # " << cameraDefn.getDeviceNum() << " is open == " << cameraDefn.getDevice().isOpened() << endl;
+
+
+            // ---- for each camera ---- : put this into each 'agent' 
+            Mat image;
+            //  image = imread(argv[1], CV_LOAD_IMAGE_COLOR);   // Read the file
+            cameraDefn.getDevice().read(image) ;
+            if(! image.data ) {                             // Check for invalid input
+                cout <<  "Could not open or find the image" << std::endl ;
+            } else {
+                string window_name = "Displaying camera "+to_string(cameraDefn.getDeviceNum());
+                namedWindow(window_name , WINDOW_AUTOSIZE );// Create a window for display.
+                imshow( window_name , image );                   // Show our image inside it.
+                //waitKey(0);                                          // Wait for a keystroke in the window                 
+                // Press  ESC on keyboard to exit
+                char c=(char)waitKey(25);   // Wait for a keystroke in the window for 30ms
+                if(c==27) {
+                    keepLooping = false;
+                }
+
+
+
+                    // grab histogram of patch for the HSV model
+
+                    // Calculate histogram
+                        // Initialize parameters
+                        int histSize = 256;    // bin size
+                        float range[] = { 0, 255 };
+                        const float *ranges[] = { range };
+                    Mat gray;    
+                    cvtColor(image, gray, CV_BGR2GRAY);    
+                        //  imshow(window_name, gray) ;
+                        //  waitKey(0) ;
+                    Mat hist;
+                    calcHist( &gray, 1, 0, Mat(), hist, 1, &histSize, ranges, true, false );
+
+
+                    // grab texture of patch for the texture model 
+                    
+            }        
+        }
     }
 
 
+    
 
     /* code */
     cout << "-9000" << endl;
     return -9000;
 }
+
