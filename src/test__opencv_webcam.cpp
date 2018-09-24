@@ -80,8 +80,15 @@ int main(int argc, char const *argv[])
     }
     cout << "found " << cameraDefs.size() << " cameras:" << endl;
 
+    int frameNum = 0;
+    bool saveData = false;
     bool keepLooping = true;
+
+    vector<int> compression_params;
+    compression_params.push_back(CV_IMWRITE_PNG_COMPRESSION);
+    compression_params.push_back(9);
     while(keepLooping) {
+        frameNum++;
         for (VideoCaptureMeta& cameraDefn: cameraDefs) {
             cout << "Camera # " << cameraDefn.getDeviceNum() << " is open == " << cameraDefn.getDevice().isOpened() << endl;
 
@@ -101,7 +108,11 @@ int main(int argc, char const *argv[])
                 char c=(char)waitKey(25);   // Wait for a keystroke in the window for 30ms
                 if(c==27) {
                     keepLooping = false;
+                } else if (c==115 || c==83){ 
+                    saveData = !saveData;
+                    cout << "Toggled saveData to " << saveData << endl;
                 }
+                
 
 
 
@@ -121,6 +132,21 @@ int main(int argc, char const *argv[])
 
 
                     // grab texture of patch for the texture model 
+
+
+                    // save data
+                    if(saveData) {
+                        imwrite("/mnt/nixbig/temp/camera_"+to_string(cameraDefn.getDeviceNum())+"/camera_"+to_string(cameraDefn.getDeviceNum())+"_"+to_string(frameNum)+".png", image, compression_params);
+                        imwrite("/mnt/nixbig/temp/camera_"+to_string(cameraDefn.getDeviceNum())+"_bw/camera_"+to_string(cameraDefn.getDeviceNum())+"_bw_"+to_string(frameNum)+".png", gray, compression_params);
+/*
+mkdir -p /mnt/nixbig/temp/camera_1
+mkdir -p /mnt/nixbig/temp/camera_1_bw
+mkdir -p /mnt/nixbig/temp/camera_2
+mkdir -p /mnt/nixbig/temp/camera_2_bw
+mkdir -p /mnt/nixbig/temp/camera_3
+mkdir -p /mnt/nixbig/temp/camera_3_bw
+*/                        
+                    }
                     
             }        
         }
